@@ -51,10 +51,14 @@ class Evaluator:
                     self.__vals_data[vd]['self_delegated'] = int(delg['balance']['amount']) * (10**-6)
                     self.__vals_data[vd]['ratio'] = self.__vals_data[vd]['self_delegated'] / self.__vals_data[vd]['vp']
    
-    def __save_ratios(self, savefile = "ratios.csv"):
+    def __save_ratios(self, savefile = "selfdels.csv"):
         with open(savefile, "w") as f:
             for vd in self.__vals_data:
-                f.write(f"{vd};{self.__vals_data[vd]['ratio']}\n")
+                csv_data = (f"{vd};"
+                            f"{self.__vals_data[vd]['vp']};"
+                            f"{self.__vals_data[vd]['self_delegated']};"
+                            f"{'{:f}'.format(self.__vals_data[vd]['ratio'])}\n")
+                f.write(csv_data)
 
 
 if __name__ == "__main__":
