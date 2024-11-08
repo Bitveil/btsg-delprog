@@ -3,6 +3,7 @@ import requests
 import json
 from bip_utils import Bech32Encoder, Bech32Decoder
 
+separator = ";"
 
 def fetchValidators(api_addr: str) -> [dict]:
     r = requests.get(f"{api_addr}/staking/validators")
@@ -36,11 +37,9 @@ def saveToCsv(valdicts: [dict]) -> bool:
             line.append(v['wallet'])
             line.append(v['address'])
             line.append(v_desc['moniker'])
-            if('details' in v_desc):
-                line.append(v_desc['details'].replace("\n",""))
-            if('website' in v_desc):
-                line.append(v_desc['website'])
-            f.write(";".join(line)+"\n")
+            line.append(v_desc['details'].replace("\n","")) if 'details' in v_desc else line.append("")
+            line.append(v_desc['website']) if 'website' in v_desc else line.append("")
+            f.write(separator.join(line)+"\n")
            
     return True
 
