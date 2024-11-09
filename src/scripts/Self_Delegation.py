@@ -23,6 +23,8 @@ class Evaluator:
             vals_data[hexaddr] = {}
             vals_data[hexaddr]['valoper'] = v[0]
             vals_data[hexaddr]['wallet'] = v[1]
+            if('bitsong' in v[-1] and (len(v[-1].strip()) == 46 or "," in v[-1])):
+                vals_data[hexaddr]['extra_wallets'] = [x.strip() for x in v[-1].split(",")]
         return vals_data
 
     def __fetch_vps(self, per_page: int = 100):
@@ -35,7 +37,7 @@ class Evaluator:
             r = requests.get(f"{req_str}&page={i+1}")
             json_res = json.loads(r.text)
             for v in json_res['result']['validators']:
-                print(v['address'])
+                #print(v['address'])
                 if v['address'] in self.__vals_data:
                     self.__vals_data[v['address']]['vp'] = int(v['voting_power'])
                     continue
@@ -47,8 +49,8 @@ class Evaluator:
             r = requests.get(f"{self.__api}/cosmos/staking/v1beta1/validators/{self.__vals_data[vd]['valoper']}/delegations")
             json_res = json.loads(r.text)
             for delg in json_res['delegation_responses']:
-                if delg['delegation']['delegator_address'] == self.__vals_data[vd]['wallet']:
-                    self.__vals_data[vd]['self_delegated'] = int(delg['balance']['amount']) * (10**-6)
+                if delg['delegation']['delegator_address'] == self.__vals_data[vd]['wallet'] or ('extra_wallets' in self.__vals_data[vd] and delg['delegation']['delegator_address'] in self.__vals_data[vd]['extra_wallets']):
+                    self.__vals_data[vd]['self_delegated'] = self.__vals_data[vd]['self_delegated'] + int(delg['balance']['amount']) * (10**-6)
                     self.__vals_data[vd]['ratio'] = self.__vals_data[vd]['self_delegated'] / self.__vals_data[vd]['vp']
    
     def __save_ratios(self, savefile = "selfdels.csv"):
