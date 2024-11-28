@@ -44,10 +44,21 @@ class Evaluator:
 
     def __evaluate_ratios(self):
         for vd in self.__vals_data:
+            r = requests.get(f"{self.__api}/cosmos/staking/v1beta1/validators/{self.__vals_data[vd]['valoper']}/delegations")
             self.__vals_data[vd]['self_delegated'] = 0
             self.__vals_data[vd]['ratio'] = 0
-            r = requests.get(f"{self.__api}/cosmos/staking/v1beta1/validators/{self.__vals_data[vd]['valoper']}/delegations")
             json_res = json.loads(r.text)
+            next_total = int(json_res['pagination']['total'])
+            next_key = json_res['pagination']['next_key']
+            while(next_total != 0):
+                r = requests.get(f"{self.__api}/cosmos/staking/v1beta1/validators/{self.__vals_data[vd]['valoper']}/delegations?pagination.key={next_key}")
+                while_res = json.loads(r.text)
+                if 'delegation_responses' in while_res and 'pagination' in while_res: 
+                    json_res['delegation_responses'] += while_res['delegation_responses']
+                    next_total = int(while_res['pagination']['total'])
+                    next_key = while_res['pagination']['next_key']
+                else:
+                    break
             for delg in json_res['delegation_responses']:
                 if delg['delegation']['delegator_address'] == self.__vals_data[vd]['wallet'] or ('extra_wallets' in self.__vals_data[vd] and delg['delegation']['delegator_address'] in self.__vals_data[vd]['extra_wallets']):
                     self.__vals_data[vd]['self_delegated'] = self.__vals_data[vd]['self_delegated'] + int(delg['balance']['amount']) * (10**-6)
